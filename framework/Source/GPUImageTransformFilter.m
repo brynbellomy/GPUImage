@@ -12,7 +12,23 @@ NSString *const kGPUImageTransformVertexShaderString = SHADER_STRING
  
  void main()
  {
-     gl_Position = transformMatrix * vec4(position.xyz, 1.0) * orthographicMatrix;
+   // set 3.0 and 2.0 to match the perspective ratio of
+   // the view/layer in which this is being rendered
+   
+   mat4 window_scale = mat4(vec4(3.0/2.0, 0.0, 0.0, 0.0),
+                            vec4(    0.0, 1.0, 0.0, 0.0),
+                            vec4(    0.0, 0.0, 1.0, 0.0),
+                            vec4(    0.0, 0.0, 0.0, 1.0) );
+   
+   mat4 object_scale = mat4(vec4(2.0/3.0, 0.0, 0.0, 0.0),
+                            vec4(    0.0, 1.0, 0.0, 0.0),
+                            vec4(    0.0, 0.0, 1.0, 0.0),
+                            vec4(    0.0, 0.0, 0.0, 1.0) );
+   
+   gl_Position = window_scale * transformMatrix //* object_scale
+//   gl_Position = transformMatrix
+                    * vec4(position.xyz, 1.0)
+                    * orthographicMatrix;
      textureCoordinate = inputTextureCoordinate.xy;
  }
 );
@@ -194,5 +210,37 @@ NSString *const kGPUImageTransformVertexShaderString = SHADER_STRING
         [self setupFilterForSize:[self sizeOfFBO]];
     }
 }
+
+
+
+- (void)informTargetsAboutNewFrameAtTime:(CMTime)frameTime;
+{
+  if (self.frameProcessingCompletionBlock != NULL)
+  {
+    self.frameProcessingCompletionBlock(self);
+  }
+  
+  for (id<GPUImageInput> currentTarget in targets)
+  {
+    NSInteger indexOfObject = [targets indexOfObject:currentTarget];
+    NSInteger textureIndex = [[targetTextureIndices objectAtIndex:indexOfObject] integerValue];
+    
+    if (currentTarget != self.targetToIgnoreForUpdates)
+    {
+      if ([GPUImageOpenGLESContext supportsFastTextureUpload] && preparedToCaptureImage)
+      {
+        [self setInputTextureForTarget:currentTarget atIndex:textureIndex];
+      }
+      
+      [currentTarget setInputSize:[self outputFrameSize] atIndex:textureIndex];
+      [currentTarget newFrameReadyAtTime:frameTime];
+    }
+    else
+    {
+      [self setInputTextureForTarget:currentTarget atIndex:textureIndex];
+    }
+  }
+}
+
 
 @end
