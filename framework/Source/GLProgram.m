@@ -4,6 +4,17 @@
 
 
 #import "GLProgram.h"
+
+void gglUseProgram(GLuint p) {
+  static SInt32 currentP = -1;
+  
+  if (p == currentP)
+    return;
+
+  currentP = p;
+  glUseProgram(p);
+}
+
 // START:typedefs
 #pragma mark Function Pointer Definitions
 typedef void (*GLInfoFunction)(GLuint program, 
@@ -172,7 +183,7 @@ typedef void (*GLLogFunction) (GLuint program,
 // START:use
 - (void)use
 {
-    glUseProgram(program);
+    gglUseProgram(program);
 }
 // END:use
 #pragma mark -

@@ -31,3 +31,7 @@
 - (NSString *)programLog;
 - (void)validate;
 @end
+
+
+
+void gglUseProgram(GLuint p);
