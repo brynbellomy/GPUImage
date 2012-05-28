@@ -2,8 +2,18 @@
 #import "GPUImageMovieWriter.h"
 #import <mach/mach.h>
 
+static BOOL appIsBackgrounded = NO;
+
+void setAppIsBackgrounded(BOOL isBackgrounded) {
+  appIsBackgrounded = isBackgrounded;
+}
+
 void runOnMainQueueWithoutDeadlocking(void (^block)(void))
 {
+  if (appIsBackgrounded == YES) {
+    return;
+  }
+  
 	if ([NSThread isMainThread])
 	{
 		block();

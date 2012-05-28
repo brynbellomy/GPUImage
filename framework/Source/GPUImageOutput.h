@@ -3,6 +3,7 @@
 #import "GPUImageOpenGLESContext.h"
 #import "GLProgram.h"
 
+void setAppIsBackgrounded(BOOL isBackgrounded);
 void runOnMainQueueWithoutDeadlocking(void (^block)(void));
 void report_memory(NSString *tag);
 
