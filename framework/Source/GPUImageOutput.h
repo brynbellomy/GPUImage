@@ -4,6 +4,7 @@
 #import "GLProgram.h"
 
 void setAppIsBackgrounded(BOOL isBackgrounded);
+BOOL appIsBackgrounded(void);
 void runOnMainQueueWithoutDeadlocking(void (^block)(void));
 void report_memory(NSString *tag);
 

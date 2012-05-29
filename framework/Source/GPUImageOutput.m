@@ -2,15 +2,19 @@
 #import "GPUImageMovieWriter.h"
 #import <mach/mach.h>
 
-static BOOL appIsBackgrounded = NO;
+static BOOL _appIsBackgrounded = NO;
+
+BOOL appIsBackgrounded(void) {
+  return _appIsBackgrounded;
+}
 
 void setAppIsBackgrounded(BOOL isBackgrounded) {
-  appIsBackgrounded = isBackgrounded;
+  _appIsBackgrounded = isBackgrounded;
 }
 
 void runOnMainQueueWithoutDeadlocking(void (^block)(void))
 {
-  if (appIsBackgrounded == YES) {
+  if (_appIsBackgrounded == YES) {
     return;
   }
   
