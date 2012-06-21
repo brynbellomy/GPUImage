@@ -115,11 +115,13 @@ NSString *const kGPUImageToneCurveFragmentShaderString = SHADER_STRING
 {
     NSArray *sdA = [self secondDerivative:points];
     
-    int n = [points count];
+    // Is [points count] equal to [sdA count]?
+//    int n = [points count];
+    int n = [sdA count];
     double sd[n];
     
     // From NSMutableArray to sd[n];
-    for (int i=0; i<[sdA count]; i++) 
+    for (int i=0; i<n; i++) 
     {
         sd[i] = [[sdA objectAtIndex:i] doubleValue];
     }
@@ -141,6 +143,15 @@ NSString *const kGPUImageToneCurveFragmentShaderString = SHADER_STRING
             double h = next.x-cur.x;
             
             double y= a*cur.y + b*next.y + (h*h/6)*( (a*a*a-a)*sd[i]+ (b*b*b-b)*sd[i+1] );
+                        
+            if (y > 255.0)
+            {
+                y = 255.0;   
+            }
+            else if (y < 0.0)
+            {
+                y = 0.0;   
+            }
             
             [output addObject:[NSValue valueWithCGPoint:CGPointMake(x, y)]];
         }
@@ -153,14 +164,21 @@ NSString *const kGPUImageToneCurveFragmentShaderString = SHADER_STRING
     return output;
 }
 
-
 - (NSArray *)secondDerivative:(NSArray *)points
 {
     int n = [points count];
+    if ((n <= 0) || (n == 1))
+    {
+        return nil;
+    }
     
     double matrix[n][3];
     double result[n];
     matrix[0][1]=1;
+    // What about matrix[0][1] and matrix[0][0]? Assuming 0 for now (Brad L.)
+    matrix[0][0]=0;    
+    matrix[0][2]=0;    
+    
     for(int i=1;i<n-1;i++) 
     {
         CGPoint P1 = [[points objectAtIndex:(i-1)] CGPointValue];
@@ -172,8 +190,15 @@ NSString *const kGPUImageToneCurveFragmentShaderString = SHADER_STRING
         matrix[i][2]=(double)(P3.x-P2.x)/6;
         result[i]=(double)(P3.y-P2.y)/(P3.x-P2.x) - (double)(P2.y-P1.y)/(P2.x-P1.x);
     }
+    
+    // What about result[0] and result[n-1]? Assuming 0 for now (Brad L.)
+    result[0] = 0;
+    result[n-1] = 0;
 	
     matrix[n-1][1]=1;
+    // What about matrix[n-1][0] and matrix[n-1][2]? For now, assuming they are 0 (Brad L.)
+    matrix[n-1][0]=0;
+    matrix[n-1][2]=0;
     
   	// solving pass1 (up->down)
   	for(int i=1;i<n;i++) 
@@ -203,7 +228,6 @@ NSString *const kGPUImageToneCurveFragmentShaderString = SHADER_STRING
     
     return output;
 }
-
 
 - (void)updateToneCurveTexture;
 {
@@ -278,8 +302,14 @@ NSString *const kGPUImageToneCurveFragmentShaderString = SHADER_STRING
 
 - (void)setRGBControlPoints:(NSArray *)points
 {
-    _redControlPoints = _greenControlPoints = _blueControlPoints = points;
-    _redCurve = _greenCurve = _blueCurve = [self getPreparedSplineCurve:points];
+    _redControlPoints = [points copy];
+    _redCurve = [self getPreparedSplineCurve:_redControlPoints];
+
+    _greenControlPoints = [points copy];
+    _greenCurve = [self getPreparedSplineCurve:_greenControlPoints];
+
+    _blueControlPoints = [points copy];
+    _blueCurve = [self getPreparedSplineCurve:_blueControlPoints];
     
     [self updateToneCurveTexture];
 }
@@ -287,7 +317,7 @@ NSString *const kGPUImageToneCurveFragmentShaderString = SHADER_STRING
 
 - (void)setRedControlPoints:(NSArray *)newValue;
 {  
-    _redControlPoints = newValue;
+    _redControlPoints = [newValue copy];
     _redCurve = [self getPreparedSplineCurve:_redControlPoints];
     
     [self updateToneCurveTexture];
@@ -296,7 +326,7 @@ NSString *const kGPUImageToneCurveFragmentShaderString = SHADER_STRING
 
 - (void)setGreenControlPoints:(NSArray *)newValue
 {
-    _greenControlPoints = newValue;
+    _greenControlPoints = [newValue copy];
     _greenCurve = [self getPreparedSplineCurve:_greenControlPoints];
     
     [self updateToneCurveTexture];
@@ -305,7 +335,7 @@ NSString *const kGPUImageToneCurveFragmentShaderString = SHADER_STRING
 
 - (void)setBlueControlPoints:(NSArray *)newValue
 {
-    _blueControlPoints = newValue;
+    _blueControlPoints = [newValue copy];
     _blueCurve = [self getPreparedSplineCurve:_blueControlPoints];
     
     [self updateToneCurveTexture];

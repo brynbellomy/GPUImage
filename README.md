@@ -135,13 +135,31 @@ Documentation is generated from header comments using appledoc. To build the doc
 - **GPUImage3x3ConvolutionFilter**: Runs a 3x3 convolution kernel against the image
   - *convolutionKernel*: The convolution kernel is a 3x3 matrix of values to apply to the pixel and its 8 surrounding pixels. The matrix is specified in row-major order, with the top left pixel being one.one and the bottom right three.three. If the values in the matrix don't add up to 1.0, the image could be brightened or darkened.
 
-- **GPUImageEmbossFilter**: Applies an embossing effect on the image
-  - *intensity*: The strength of the embossing, from  0.0 to 4.0, with 1.0 as the normal level
+- **GPUImageSobelEdgeDetectionFilter**: Sobel edge detection, with edges highlighted in white
+  - *texelWidth*: 
+  - *texelHeight*: These parameters affect the visibility of the detected edges
+
+- **GPUImageCannyEdgeDetectionFilter**: This uses the full Canny process to highlight one-pixel-wide edges
+  - *texelWidth*: 
+  - *texelHeight*: These parameters affect the visibility of the detected edges
+  - *blurSize*: A multiplier for the prepass blur size, ranging from 0.0 on up, with a default of 1.0
+  - *upperThreshold*: Any edge with a gradient magnitude above this threshold will pass and show up in the final result. Default is 0.4.
+  - *lowerThreshold*: Any edge with a gradient magnitude below this threshold will fail and be removed from the final result. Default is 0.1.
 
 - **GPUImageHarrisCornerDetectionFilter**: Runs the Harris corner detection algorithm on an input image, and produces an image with those corner points as white pixels and everything else black. The cornersDetectedBlock can be set, and you will be provided with a list of corners (in normalized 0..1 X, Y coordinates) within that callback for whatever additional operations you want to perform.
   - *blurSize*: The relative size of the blur applied as part of the corner detection implementation. The default is 1.0.
-  - *sensitivity*: An internal scaling factor applied to adjust the dynamic range of the cornerness maps generated in the filter. The default is 10.0.
-  - *threshold*: The threshold at which a point is detected as a corner. This can vary significantly based on the size, lighting conditions, and iOS device camera type, so it might take a little experimentation to get right for your cases. Default is 0.05.
+  - *sensitivity*: An internal scaling factor applied to adjust the dynamic range of the cornerness maps generated in the filter. The default is 5.0.
+  - *threshold*: The threshold at which a point is detected as a corner. This can vary significantly based on the size, lighting conditions, and iOS device camera type, so it might take a little experimentation to get right for your cases. Default is 0.20.
+
+- **GPUImageNobleCornerDetectionFilter**: Runs the Noble variant on the Harris corner detector. It behaves as described above for the Harris detector.
+  - *blurSize*: The relative size of the blur applied as part of the corner detection implementation. The default is 1.0.
+  - *sensitivity*: An internal scaling factor applied to adjust the dynamic range of the cornerness maps generated in the filter. The default is 5.0.
+  - *threshold*: The threshold at which a point is detected as a corner. This can vary significantly based on the size, lighting conditions, and iOS device camera type, so it might take a little experimentation to get right for your cases. Default is 0.2.
+
+- **GPUImageShiTomasiCornerDetectionFilter**: Runs the Shi-Tomasi feature detector. It behaves as described above for the Harris detector.
+  - *blurSize*: The relative size of the blur applied as part of the corner detection implementation. The default is 1.0.
+  - *sensitivity*: An internal scaling factor applied to adjust the dynamic range of the cornerness maps generated in the filter. The default is 1.5.
+  - *threshold*: The threshold at which a point is detected as a corner. This can vary significantly based on the size, lighting conditions, and iOS device camera type, so it might take a little experimentation to get right for your cases. Default is 0.2.
 
 - **GPUImageNonMaximumSuppressionFilter**: Currently used only as part of the Harris corner detection filter, this will sample a 1-pixel box around each pixel and determine if the center pixel's red channel is the maximum in that area. If it is, it stays. If not, it is set to 0 for all color components.
 
@@ -149,6 +167,22 @@ Documentation is generated from header comments using appledoc. To build the doc
 
 - **GPUImageCrosshairGenerator**: This draws a series of crosshairs on an image, most often used for identifying machine vision features. It does not take in a standard image like other filters, but a series of points in its -renderCrosshairsFromArray:count: method, which does the actual drawing. You will need to force this filter to render at the particular output size you need.
   - *crosshairWidth*: The width, in pixels, of the crosshairs to be drawn onscreen.
+
+- **GPUImageDilationFilter**: This performs an image dilation operation, where the maximum intensity of the red channel in a rectangular neighborhood is used for the intensity of this pixel. The radius of the rectangular area to sample over is specified on initialization, with a range of 1-4 pixels. This is intended for use with grayscale images, and it expands bright regions.
+
+- **GPUImageRGBDilationFilter**: This is the same as the GPUImageDilationFilter, except that this acts on all color channels, not just the red channel.
+
+- **GPUImageErosionFilter**: This performs an image erosion operation, where the minimum intensity of the red channel in a rectangular neighborhood is used for the intensity of this pixel. The radius of the rectangular area to sample over is specified on initialization, with a range of 1-4 pixels. This is intended for use with grayscale images, and it expands dark regions.
+
+- **GPUImageRGBErosionFilter**: This is the same as the GPUImageErosionFilter, except that this acts on all color channels, not just the red channel.
+
+- **GPUImageOpeningFilter**: This performs an erosion on the red channel of an image, followed by a dilation of the same radius. The radius is set on initialization, with a range of 1-4 pixels. This filters out smaller bright regions.
+
+- **GPUImageRGBOpeningFilter**: This is the same as the GPUImageOpeningFilter, except that this acts on all color channels, not just the red channel.
+
+- **GPUImageClosingFilter**: This performs a dilation on the red channel of an image, followed by an erosion of the same radius. The radius is set on initialization, with a range of 1-4 pixels. This filters out smaller dark regions.
+
+- **GPUImageRGBClosingFilter**: This is the same as the GPUImageClosingFilter, except that this acts on all color channels, not just the red channel.
 
 ### Blending modes ###
 
@@ -197,16 +231,6 @@ Documentation is generated from header comments using appledoc. To build the doc
   - *crossHatchSpacing*: The fractional width of the image to use as the spacing for the crosshatch. The default is 0.03.
   - *lineWidth*: A relative width for the crosshatch lines. The default is 0.003.
 
-- **GPUImageSobelEdgeDetectionFilter**: Sobel edge detection, with edges highlighted in white
-  - *texelWidth*: 
-  - *texelHeight*: These parameters affect the visibility of the detected edges
-
-- **GPUImageCannyEdgeDetectionFilter**: This uses a Gaussian blur before applying a Sobel operator to highlight edges
-  - *texelWidth*: 
-  - *texelHeight*: These parameters affect the visibility of the detected edges
-  - *blurSize*: A multiplier for the prepass blur size, ranging from 0.0 on up, with a default of 1.0
-  - *threshold*: Any edge above this threshold will be black, and anything below white. Ranges from 0.0 to 1.0, with 0.5 as the default
-
 - **GPUImageSketchFilter**: Converts video to look like a sketch. This is just the Sobel edge detection filter with the colors inverted
   - *texelWidth*: 
   - *texelHeight*: These parameters affect the visibility of the detected edges
@@ -223,6 +247,9 @@ Documentation is generated from header comments using appledoc. To build the doc
   - *blurSize*: A multiplier for the prepass blur size, ranging from 0.0 on up, with a default of 0.5
   - *threshold*: The sensitivity of the edge detection, with lower values being more sensitive. Ranges from 0.0 to 1.0, with 0.2 as the default
   - *quantizationLevels*: The number of color levels to represent in the final image. Default is 10.0
+
+- **GPUImageEmbossFilter**: Applies an embossing effect on the image
+  - *intensity*: The strength of the embossing, from  0.0 to 4.0, with 1.0 as the normal level
 
 - **GPUImagePosterizeFilter**: This reduces the color dynamic range into the number of steps specified, leading to a cartoon-like simple shading of the image.
   - *colorLevels*: The number of color levels to reduce the image space to. This ranges from 1 to 256, with a default of 10.

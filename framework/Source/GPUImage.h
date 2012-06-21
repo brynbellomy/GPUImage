@@ -15,6 +15,7 @@
 #import "GPUImageTextureOutput.h"
 #import "GPUImageFilterGroup.h"
 #import "GPUImageTextureInput.h"
+#import "GPUImageUIElement.h"
 
 // Filters
 #import "GPUImageFilter.h"
@@ -89,4 +90,14 @@
 #import "GPUImageBilateralFilter.h"
 #import "GPUImageCrosshairGenerator.h"
 #import "GPUImageToneCurveFilter.h"
-
+#import "GPUImageNobleCornerDetectionFilter.h"
+#import "GPUImageShiTomasiFeatureDetectionFilter.h"
+#import "GPUImageErosionFilter.h"
+#import "GPUImageRGBErosionFilter.h"
+#import "GPUImageDilationFilter.h"
+#import "GPUImageRGBDilationFilter.h"
+#import "GPUImageOpeningFilter.h"
+#import "GPUImageRGBOpeningFilter.h"
+#import "GPUImageClosingFilter.h"
+#import "GPUImageRGBClosingFilter.h"
+#import "GPUImageColorPackingFilter.h"
